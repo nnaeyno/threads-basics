@@ -1,3 +1,7 @@
+import threading
+from asyncio import as_completed
+from concurrent.futures import ThreadPoolExecutor
+
 import requests
 import json
 from abc import ABC, abstractmethod
@@ -31,11 +35,24 @@ class JSONDataWriter(DataWriter):
 
 
 class MultiThreadDataProcessor:
+
     def __init__(self, fetcher: DataFetcher, writer: DataWriter):
         self.fetcher = fetcher
         self.writer = writer
+        self.lock = threading.Lock()
 
-    def process(self, url: str, output_file: str):
+    def worker(self, url: str, file_path: str):
         data = self.fetcher.fetch(url)
-        self.writer.write(data, output_file)
+        if data:
+            with self.lock:
+                self.writer.write(data, file_path)
 
+    def process(self, urls: list, output_file: str, max_threads: int = 16):
+        with ThreadPoolExecutor(max_workers=max_threads) as executor:
+            futures = [executor.submit(self.worker, url, output_file) for url in urls]
+
+            for future in as_completed(futures):
+                try:
+                    future.result()
+                except Exception as e:
+                    print(f"Exception during execution: {e}")
