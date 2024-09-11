@@ -1,6 +1,5 @@
 import threading
-from asyncio import as_completed
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, wait
 
 import requests
 import json
@@ -30,8 +29,24 @@ class URLDataFetcher(DataFetcher):
 
 class JSONDataWriter(DataWriter):
     def write(self, data: dict, output_file: str):
-        with open(output_file, 'w') as f:
+        with open(output_file, 'r+') as f:
+
+            f.seek(0, 2)
+            file_pos = f.tell()
+
+            if file_pos == 0:
+                f.write('[\n')
+            else:
+                f.seek(file_pos - 1)
+                if f.read(1) == ']':
+                    f.seek(file_pos - 2)
+                else:
+                    f.seek(file_pos - 1)
+
+                f.write(',\n')
+
             json.dump(data, f, indent=4)
+            f.write('\n]')
 
 
 class MultiThreadDataProcessor:
@@ -44,15 +59,20 @@ class MultiThreadDataProcessor:
     def worker(self, url: str, file_path: str):
         data = self.fetcher.fetch(url)
         if data:
-            with self.lock:
+            with self.lock:  # this is very inefficient but the requirement said to save to file immediately
                 self.writer.write(data, file_path)
 
     def process(self, urls: list, output_file: str, max_threads: int = 16):
         with ThreadPoolExecutor(max_workers=max_threads) as executor:
             futures = [executor.submit(self.worker, url, output_file) for url in urls]
+            wait(futures)
+        self.finalize_json_file(output_file)
 
-            for future in as_completed(futures):
-                try:
-                    future.result()
-                except Exception as e:
-                    print(f"Exception during execution: {e}")
+    def finalize_json_file(self, file_path: str):
+        with self.lock:
+            with open(file_path, 'rb+') as f:
+                f.seek(-2, 2)
+                if f.read(1) == ',':
+                    f.seek(-2, 2)
+                    f.truncate()
+                f.write(b'\n]')

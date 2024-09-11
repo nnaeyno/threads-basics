@@ -1,10 +1,12 @@
 from data_processing import JSONDataWriter, MultiThreadDataProcessor, URLDataFetcher
 
+
 def construct_urls(base_url: str):
     result = []
     for i in range(1, 78):
         result += [base_url + str(i)]
     return result
+
 
 if __name__ == "__main__":
     base_url = "https://jsonplaceholder.typicode.com/posts/"
