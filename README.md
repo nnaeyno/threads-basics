@@ -1,4 +1,4 @@
-# web-scraping-basics
+# Threads
 ## Overview
 multi-threaded data fetching and JSON writing utility. <br> It fetches data from multiple URLs concurrently using threading, processes it, and writes the data to a JSON file. <br> The final JSON file is formatted as a valid JSON array of objects.
 
