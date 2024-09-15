@@ -1,6 +1,7 @@
 import time
 
-from data_processing import JSONDataWriter, MultiThreadDataProcessor, URLDataFetcher
+from data_processing import JSONDataWriter, URLDataFetcher
+from async_data_processing import AsyncDataProcessor, AsyncJSONDataWriter, AsyncDataFetcher
 
 
 def construct_urls(base_url: str):
@@ -14,13 +15,12 @@ if __name__ == "__main__":
     start_time = time.time()
     base_url = "https://jsonplaceholder.typicode.com/posts/"
     output_file = "data.json"
-
-    fetcher = URLDataFetcher()
-
-    writer = JSONDataWriter()
-
-    processor = MultiThreadDataProcessor(fetcher, writer)
     urls = construct_urls(base_url)
+
+    fetcher = AsyncDataFetcher()
+    writer = AsyncJSONDataWriter()
+
+    processor = AsyncDataProcessor(fetcher, writer)
 
     try:
         processor.process(urls, output_file)

@@ -6,6 +6,16 @@ import json
 from abc import ABC, abstractmethod
 
 
+class DataProcessor(ABC):
+    @abstractmethod
+    def process(self, urls: list, output_file: str, max_workers: int = 16):
+        pass
+
+    @abstractmethod
+    def worker(self, url: str, file_path: str):
+        pass
+
+
 class DataFetcher(ABC):
     @abstractmethod
     def fetch(self, url: str) -> dict:
@@ -49,7 +59,7 @@ class JSONDataWriter(DataWriter):
             f.write('\n]')
 
 
-class MultiThreadDataProcessor:
+class MultiThreadDataProcessor(DataProcessor):
 
     def __init__(self, fetcher: DataFetcher, writer: DataWriter):
         self.fetcher = fetcher
@@ -62,8 +72,8 @@ class MultiThreadDataProcessor:
             with self.lock:  # this is very inefficient but the requirement said to save to file immediately
                 self.writer.write(data, file_path)
 
-    def process(self, urls: list, output_file: str, max_threads: int = 16):
-        with ThreadPoolExecutor(max_workers=max_threads) as executor:
+    def process(self, urls: list, output_file: str, max_workers: int = 16):
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = [executor.submit(self.worker, url, output_file) for url in urls]
             wait(futures)
         self.finalize_json_file(output_file)
