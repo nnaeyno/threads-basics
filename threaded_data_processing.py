@@ -1,7 +1,19 @@
 import threading
 from concurrent.futures import ThreadPoolExecutor, wait
 import json
+
+import requests
+
 from data_processing import DataWriter, DataProcessor, DataFetcher
+
+
+class URLDataFetcher(DataFetcher):
+    def fetch(self, url: str) -> dict:
+        response = requests.get(url)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise ValueError(f"Failed to fetch data from {url}, status code: {response.status_code}")
 
 
 class JSONDataWriter(DataWriter):
@@ -29,8 +41,7 @@ class JSONDataWriter(DataWriter):
 class MultiThreadDataProcessor(DataProcessor):
 
     def __init__(self, fetcher: DataFetcher, writer: DataWriter):
-        self.fetcher = fetcher
-        self.writer = writer
+        super().__init__(fetcher, writer)
         self.lock = threading.Lock()
 
     def worker(self, url: str, file_path: str):

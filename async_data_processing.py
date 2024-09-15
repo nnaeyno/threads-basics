@@ -6,7 +6,7 @@ from data_processing import DataWriter, DataProcessor, DataFetcher
 
 
 class AsyncDataFetcher(DataFetcher):
-    async def fetch(self, url: str):
+    async def fetch(self, url: str) -> dict:
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 if response.status == 200:
@@ -46,9 +46,8 @@ class AsyncJSONDataWriter(DataWriter):
 
 
 class AsyncDataProcessor(DataProcessor):
-    def __init__(self, fetcher: DataFetcher, writer: AsyncJSONDataWriter):
-        self.fetcher = fetcher
-        self.writer = writer
+    def __init__(self, fetcher: AsyncDataFetcher, writer: DataWriter):
+        super().__init__(fetcher, writer)
 
     async def worker(self, url: str, file_path: str):
         try:

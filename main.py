@@ -1,7 +1,8 @@
+import asyncio
+import os
 import time
-
-from threaded_data_processing import JSONDataWriter, URLDataFetcher
 from async_data_processing import AsyncDataProcessor, AsyncJSONDataWriter, AsyncDataFetcher
+from threaded_data_processing import URLDataFetcher, JSONDataWriter, MultiThreadDataProcessor
 
 
 def construct_urls(base_url: str):
@@ -11,11 +12,24 @@ def construct_urls(base_url: str):
     return result
 
 
-if __name__ == "__main__":
+def thread_main(output_file, urls, max_workers):
     start_time = time.time()
-    base_url = "https://jsonplaceholder.typicode.com/posts/"
-    output_file = "data.json"
-    urls = construct_urls(base_url)
+
+    fetcher = URLDataFetcher()
+    writer = JSONDataWriter()
+
+    processor = MultiThreadDataProcessor(fetcher, writer)
+
+    try:
+        processor.process(urls, output_file, max_workers)
+        print(
+            f"Data successfully fetched from {base_url} and saved to {output_file}. {time.time() - start_time} seconds")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+async def async_main(output_file, urls, max_workers):
+    start_time = time.time()
 
     fetcher = AsyncDataFetcher()
     writer = AsyncJSONDataWriter()
@@ -23,7 +37,20 @@ if __name__ == "__main__":
     processor = AsyncDataProcessor(fetcher, writer)
 
     try:
-        processor.process(urls, output_file)
-        print(f"Data successfully fetched from {base_url} and saved to {output_file}. {time.time() - start_time} seconds")
+        await processor.process(urls, async_output_file, max_workers)
+        await writer.finalize(async_output_file)
+        print(
+            f"Data successfully fetched from {base_url} and saved to {output_file}. {time.time() - start_time} seconds")
     except Exception as e:
         print(f"An error occurred: {e}")
+
+
+# Run the main process
+if __name__ == "__main__":
+    base_url = "https://jsonplaceholder.typicode.com/posts/"
+    async_output_file = "async_data.json"
+    thread_output_file = "thread_data.json"
+    num_workers = 77
+    api_urls = construct_urls(base_url)
+    asyncio.run(async_main(async_output_file, api_urls, num_workers))
+    thread_main(thread_output_file, api_urls, num_workers)
