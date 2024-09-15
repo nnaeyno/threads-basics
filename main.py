@@ -1,6 +1,6 @@
 import time
 
-from data_processing import JSONDataWriter, URLDataFetcher
+from threaded_data_processing import JSONDataWriter, URLDataFetcher
 from async_data_processing import AsyncDataProcessor, AsyncJSONDataWriter, AsyncDataFetcher
 
 

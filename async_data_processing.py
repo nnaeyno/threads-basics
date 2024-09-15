@@ -2,8 +2,7 @@ import asyncio
 import json
 import os
 import aiohttp
-
-from data_processing import DataWriter, DataFetcher, DataProcessor
+from data_processing import DataWriter, DataProcessor, DataFetcher
 
 
 class AsyncDataFetcher(DataFetcher):
