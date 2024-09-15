@@ -15,7 +15,7 @@ class AsyncDataFetcher(DataFetcher):
                     raise Exception(f"Failed to fetch data from {url}")
 
 
-async def finalize(output_file: str):
+def finalize(output_file: str):
     """Ensure that the JSON array is properly closed."""
     with open(output_file, 'rb+') as f:
         f.seek(0, os.SEEK_END)
@@ -69,4 +69,4 @@ class AsyncDataProcessor(DataProcessor):
             tasks.append(limited_worker(url))
 
         await asyncio.gather(*tasks)
-        await finalize(output_file)
+        finalize(output_file)
