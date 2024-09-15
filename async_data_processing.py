@@ -15,45 +15,45 @@ class AsyncDataFetcher(DataFetcher):
                     raise Exception(f"Failed to fetch data from {url}")
 
 
+async def finalize(output_file: str):
+    """Ensure that the JSON array is properly closed."""
+    with open(output_file, 'rb+') as f:
+        f.seek(0, os.SEEK_END)
+        size = f.tell()
+        if size > 1:
+            f.seek(size - 2)
+            f.truncate()
+
+    with open(output_file, 'a') as f:
+        f.write("\n]")
+
+
 class AsyncJSONDataWriter(DataWriter):
     def __init__(self):
         self.first_write = True
-        self.lock = asyncio.Lock()
 
     async def write(self, data: dict, output_file: str):
-        async with self.lock:
-            if not os.path.exists(output_file) or self.first_write:
-                with open(output_file, 'w') as f:
-                    f.write("[\n")
-                self.first_write = False
+        if not os.path.exists(output_file) or self.first_write:
+            with open(output_file, 'w') as f:
+                f.write("[\n")
+            self.first_write = False
 
-            with open(output_file, 'a') as f:
-                json.dump(data, f, indent=4)
-                f.write(",\n")
-
-    async def finalize(self, output_file: str):
-        """Ensure that the JSON array is properly closed."""
-        async with self.lock:
-            with open(output_file, 'rb+') as f:
-                f.seek(0, os.SEEK_END)
-                size = f.tell()
-                if size > 1:
-                    f.seek(size - 2)
-                    f.truncate()
-
-            with open(output_file, 'a') as f:
-                f.write("\n]")
+        with open(output_file, 'a') as f:
+            json.dump(data, f, indent=4)
+            f.write(",\n")
 
 
 class AsyncDataProcessor(DataProcessor):
     def __init__(self, fetcher: AsyncDataFetcher, writer: DataWriter):
         super().__init__(fetcher, writer)
+        self.lock = asyncio.Lock()
 
     async def worker(self, url: str, file_path: str):
         try:
             data = await self.fetcher.fetch(url)
             if data:
-                await self.writer.write(data, file_path)
+                async with self.lock:
+                    await self.writer.write(data, file_path)
         except Exception as e:
             print(f"Error processing {url}: {e}")
 
@@ -69,3 +69,4 @@ class AsyncDataProcessor(DataProcessor):
             tasks.append(limited_worker(url))
 
         await asyncio.gather(*tasks)
+        await finalize(output_file)

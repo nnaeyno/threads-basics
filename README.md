@@ -3,8 +3,8 @@
 multi-threaded and async data fetching and JSON writing utility. <br> It fetches data from multiple URLs concurrently using threading, processes it, and writes the data to a JSON file. <br> The final JSON file is formatted as a valid JSON array of objects.
 
 ## Results and comparisons:
-* Data successfully fetched from https://jsonplaceholder.typicode.com/posts/ and saved to _async_data.json_. **0.4490470886230469 seconds**
-* Data successfully fetched from https://jsonplaceholder.typicode.com/posts/ and saved to _thread_data.json_. **0.45807504653930664 seconds**
+* Data successfully fetched from https://jsonplaceholder.typicode.com/posts/ and saved to _async_data.json_. **0.4647059440612793 seconds**
+* Data successfully fetched from https://jsonplaceholder.typicode.com/posts/ and saved to _thread_data.json_. **0.39253807067871094 seconds**
 
 ## Features
 1. **Concurrent Data Fetching:** Uses multiple threads or concurrency to fetch data from multiple URLs simultaneously, improving performance and efficiency.
